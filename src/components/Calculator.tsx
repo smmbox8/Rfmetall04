@@ -561,7 +561,7 @@ const MetalCalculator: React.FC = () => {
                               Цена 5-15 т: {Math.round(price5to15).toLocaleString()} ₸/т
                             </div>
                             <div className={`text-sm font-bold ${selectedItem === item ? 'text-orange-200' : 'text-blue-600'}`}>
-                              Цена >15 т: {Math.round(priceOver15).toLocaleString()} ₸/т
+                              Цена {'>'}15 т: {Math.round(priceOver15).toLocaleString()} ₸/т
                             </div>
                           </div>
                           

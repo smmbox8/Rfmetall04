@@ -79,19 +79,20 @@ const findExistingLead = async (phone: string): Promise<any> => {
     const formattedPhone = formatPhone(phone);
     const apiUrl = `${getApiUrl()}/crm.lead.list`;
     
+    const searchParams = new URLSearchParams();
+    searchParams.append('filter[PHONE]', formattedPhone);
+    searchParams.append('filter[>DATE_CREATE]', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    searchParams.append('select[]', 'ID');
+    searchParams.append('select[]', 'TITLE');
+    searchParams.append('select[]', 'NAME');
+    searchParams.append('select[]', 'COMMENTS');
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        'filter[PHONE]': formattedPhone,
-        'filter[>DATE_CREATE]': new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // За последние 24 часа
-        'select[]': 'ID',
-        'select[]': 'TITLE',
-        'select[]': 'NAME',
-        'select[]': 'COMMENTS'
-      })
+      body: searchParams
     });
 
     const result = await response.json();
