@@ -47,6 +47,34 @@ const Hero: React.FC = () => {
             </p>
           </div>
 
+          {/* CTA Section */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm border border-orange-500/30 rounded-3xl p-8">
+              <div className="text-center">
+                <h3 className="text-2xl lg:text-3xl font-bold text-white mb-6">
+                  🚀 Рассчитайте стоимость прямо сейчас!
+                </h3>
+                <p className="text-xl text-blue-100 mb-8">
+                  Получите точную стоимость с доставкой за 30 секунд
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <a
+                    href="#calculator"
+                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg text-center"
+                  >
+                    🧮 Рассчитать стоимость
+                  </a>
+                  <button
+                    onClick={() => openModal('Заказать звонок')}
+                    className="bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all text-center"
+                  >
+                    📞 Заказать звонок
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Features Grid */}
           <div className="bg-gradient-to-r from-blue-800/50 to-purple-800/50 backdrop-blur-sm border border-blue-500/30 rounded-3xl p-8 max-w-5xl mx-auto">
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
