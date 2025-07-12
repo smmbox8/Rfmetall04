@@ -141,15 +141,25 @@ const ProductsSection: React.FC = () => {
               <div className="space-y-6">
                 <h4 className="text-2xl font-bold mb-6">Популярные размеры:</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  {['32×3', '38×4', '57×3', '76×4', '89×4', '108×4', '133×4', '159×4'].map((size, index) => (
+                  {[
+                    { size: '32×3', price: '65 000 ₸/т', stock: 'В наличии' },
+                    { size: '38×4', price: '67 000 ₸/т', stock: 'В наличии' },
+                    { size: '57×3', price: '69 000 ₸/т', stock: 'В наличии' },
+                    { size: '76×4', price: '71 000 ₸/т', stock: 'В наличии' },
+                    { size: '89×4', price: '73 000 ₸/т', stock: 'В наличии' },
+                    { size: '108×4', price: '75 000 ₸/т', stock: 'В наличии' },
+                    { size: '133×4', price: '77 000 ₸/т', stock: 'В наличии' },
+                    { size: '159×4', price: '79 000 ₸/т', stock: 'В наличии' }
+                  ].map((item, index) => (
                     <div key={size} className={`backdrop-blur-sm border p-4 rounded-xl text-center ${
                       index % 4 === 0 ? 'bg-gradient-to-r from-red-500/20 to-pink-500/20 border-red-500/30' :
                       index % 4 === 1 ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/30' :
                       index % 4 === 2 ? 'bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border-purple-500/30' :
                       'bg-gradient-to-r from-orange-500/20 to-yellow-500/20 border-orange-500/30'
                     }`}>
-                      <div className="font-bold text-lg">{size}</div>
-                      <div className="text-green-200 text-sm">В наличии</div>
+                      <div className="font-bold text-lg">{item.size}</div>
+                      <div className="text-green-200 text-sm font-semibold">{item.price}</div>
+                      <div className="text-green-200 text-xs">{item.stock}</div>
                     </div>
                   ))}
                 </div>
@@ -185,15 +195,25 @@ const ProductsSection: React.FC = () => {
               <div className="space-y-6">
                 <h4 className="text-2xl font-bold mb-6">Популярные размеры:</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  {['20×20×2', '25×25×2', '30×30×3', '40×40×3', '50×50×4', '60×60×4', '80×80×5', '100×100×6'].map((size, index) => (
+                  {[
+                    { size: '20×20×2', price: '78 000 ₸/т', stock: 'В наличии' },
+                    { size: '25×25×2', price: '79 000 ₸/т', stock: 'В наличии' },
+                    { size: '30×30×3', price: '80 000 ₸/т', stock: 'В наличии' },
+                    { size: '40×40×3', price: '81 000 ₸/т', stock: 'В наличии' },
+                    { size: '50×50×4', price: '82 000 ₸/т', stock: 'В наличии' },
+                    { size: '60×60×4', price: '83 000 ₸/т', stock: 'В наличии' },
+                    { size: '80×80×5', price: '84 000 ₸/т', stock: 'В наличии' },
+                    { size: '100×100×6', price: '85 000 ₸/т', stock: 'В наличии' }
+                  ].map((item, index) => (
                     <div key={size} className={`backdrop-blur-sm border p-4 rounded-xl text-center ${
                       index % 4 === 0 ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30' :
                       index % 4 === 1 ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30' :
                       index % 4 === 2 ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/30' :
                       'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/30'
                     }`}>
-                      <div className="font-bold text-lg">{size}</div>
-                      <div className="text-orange-200 text-sm">В наличии</div>
+                      <div className="font-bold text-lg">{item.size}</div>
+                      <div className="text-orange-200 text-sm font-semibold">{item.price}</div>
+                      <div className="text-orange-200 text-xs">{item.stock}</div>
                     </div>
                   ))}
                 </div>

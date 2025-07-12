@@ -106,7 +106,7 @@ const Features: React.FC = () => {
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-3xl p-8 lg:p-16 text-white mb-16">
           <div className="text-center mb-12">
             <h3 className="text-3xl lg:text-4xl font-bold mb-4">Преимущества прямых поставок</h3>
-            <p className="text-xl text-blue-100">Работаем без посредников</p>
+            <p className="text-xl text-blue-100">Работаем без посредников - экономия до 50%</p>
           </div>
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
@@ -119,8 +119,8 @@ const Features: React.FC = () => {
               <div className="text-blue-100 text-lg">городов поставщиков</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl lg:text-5xl font-bold text-yellow-300 mb-2">15%</div>
-              <div className="text-blue-100 text-lg">экономия от рынка</div>
+              <div className="text-4xl lg:text-5xl font-bold text-yellow-300 mb-2">50%</div>
+              <div className="text-blue-100 text-lg">экономия до 50%</div>
             </div>
             <div className="text-center">
               <div className="text-4xl lg:text-5xl font-bold text-purple-300 mb-2">7-10</div>

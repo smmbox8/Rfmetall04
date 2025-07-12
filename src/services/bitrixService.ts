@@ -144,8 +144,23 @@ User Agent: ${leadData.userAgent || navigator.userAgent}
     }
 
     if (leadData.productData) {
-      comments += `\n\nВыбранный товар:`;
-      if (leadData.productData.item) {
+      if (leadData.productData.cartData) {
+        comments += `\n\nКорзина товаров (${leadData.productData.cartData.totalItems} позиций):`;
+        leadData.productData.cartData.items.forEach((item: any, index: number) => {
+          comments += `\n${index + 1}. ${item.name} ${item.size}`;
+          comments += `\n   Количество: ${item.quantity} шт.`;
+          comments += `\n   Вес: ${item.weight?.toFixed(2)} т`;
+          comments += `\n   Стоимость: ${Math.round(item.price || 0).toLocaleString()} ₸`;
+          comments += `\n   Филиал: ${item.branch}`;
+          comments += `\n   ГОСТ: ${item.gost}`;
+        });
+        comments += `\n\nИтого по корзине:`;
+        comments += `\nОбщий вес: ${leadData.productData.cartData.totalWeight?.toFixed(2)} т`;
+        comments += `\nСтоимость товаров: ${Math.round(leadData.productData.cartData.totalPrice - leadData.productData.cartData.deliveryPrice || 0).toLocaleString()} ₸`;
+        comments += `\nДоставка: ${Math.round(leadData.productData.cartData.deliveryPrice || 0).toLocaleString()} ₸`;
+        comments += `\nИтого с доставкой: ${Math.round(leadData.productData.cartData.totalPrice || 0).toLocaleString()} ₸`;
+      } else if (leadData.productData.item) {
+        comments += `\n\nВыбранный товар:`;
         comments += `\nТовар: ${leadData.productData.item.name} ${leadData.productData.item.size}`;
         comments += `\nКоличество: ${leadData.productData.quantity} шт.`;
         comments += `\nОбщий вес: ${leadData.productData.totalWeight?.toFixed(2)} т`;

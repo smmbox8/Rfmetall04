@@ -20,6 +20,7 @@ import {
   SUPPLIER_CITIES
 } from '../data/priceData';
 import { useCallModal } from '../contexts/CallModalContext';
+import { useCart } from '../contexts/CartContext';
 
 interface CalculatorResult {
   selectedItem: PriceItem;
@@ -27,7 +28,6 @@ interface CalculatorResult {
   quantityPieces: number;
   quantityMeters: number;
   pricePerTon: number;
-  totalPriceRub: number;
   totalPriceTenge: number;
   deliveryPrice: number;
   totalWithDelivery: number;
@@ -37,6 +37,7 @@ interface CalculatorResult {
 
 const MetalCalculator: React.FC = () => {
   const { openModal } = useCallModal();
+  const { addToCart, isInCart, getItemQuantityInCart } = useCart();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<string>('');
   const [selectedSteel, setSelectedSteel] = useState<string>('');
@@ -50,6 +51,7 @@ const MetalCalculator: React.FC = () => {
   const [calculatorResult, setCalculatorResult] = useState<CalculatorResult | null>(null);
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [categoryFilters, setCategoryFilters] = useState<Record<string, any>>({});
   const itemsPerPage = 12;
 
   const categories = getCategories();
@@ -59,6 +61,19 @@ const MetalCalculator: React.FC = () => {
   const [availableDiameters, setAvailableDiameters] = useState<string[]>([]);
 
   useEffect(() => {
+    // Сохраняем фильтры для текущей категории
+    if (selectedCategory) {
+      setCategoryFilters(prev => ({
+        ...prev,
+        [selectedCategory]: {
+          branch: selectedBranch,
+          steel: selectedSteel,
+          diameter: selectedDiameter,
+          search: searchQuery
+        }
+      }));
+    }
+
     const filters = {
       category: selectedCategory || undefined,
       branch: selectedBranch || undefined,
@@ -79,6 +94,23 @@ const MetalCalculator: React.FC = () => {
       setAvailableDiameters([]);
     }
   }, [selectedCategory, selectedBranch, selectedSteel, selectedDiameter, searchQuery]);
+
+  // Восстанавливаем фильтры при смене категории
+  useEffect(() => {
+    if (selectedCategory && categoryFilters[selectedCategory]) {
+      const savedFilters = categoryFilters[selectedCategory];
+      setSelectedBranch(savedFilters.branch || '');
+      setSelectedSteel(savedFilters.steel || '');
+      setSelectedDiameter(savedFilters.diameter || '');
+      setSearchQuery(savedFilters.search || '');
+    } else if (selectedCategory) {
+      // Очищаем фильтры для новой категории
+      setSelectedBranch('');
+      setSelectedSteel('');
+      setSelectedDiameter('');
+      setSearchQuery('');
+    }
+  }, [selectedCategory]);
 
   useEffect(() => {
     if (selectedItem) {
@@ -113,9 +145,8 @@ const MetalCalculator: React.FC = () => {
     
     setTimeout(() => {
       const actualTons = Math.max(MINIMUM_ORDER_TONS, quantityTons);
-      const pricePerTonRub = getPriceByVolume(selectedItem, actualTons);
-      const totalPriceRub = pricePerTonRub * actualTons;
-      const totalPriceTenge = calculateFinalPrice(totalPriceRub);
+      const prices = getPriceByVolume(selectedItem, actualTons);
+      const totalPriceTenge = prices.tenge * actualTons;
       const deliveryPrice = calculateDeliveryPrice(actualTons);
       const totalWithDelivery = totalPriceTenge + deliveryPrice;
       
@@ -130,8 +161,7 @@ const MetalCalculator: React.FC = () => {
         quantityTons: actualTons,
         quantityPieces,
         quantityMeters,
-        pricePerTon: pricePerTonRub,
-        totalPriceRub,
+        pricePerTon: prices.tenge,
         totalPriceTenge,
         deliveryPrice,
         totalWithDelivery,
@@ -140,6 +170,19 @@ const MetalCalculator: React.FC = () => {
       });
       setIsCalculating(false);
     }, 500);
+  };
+
+  const handleAddToCart = () => {
+    if (calculatorResult) {
+      addToCart(
+        calculatorResult.selectedItem,
+        calculatorResult.quantityTons,
+        calculatorResult.quantityPieces,
+        calculatorResult.quantityMeters,
+        calculatorResult.pricePerTon,
+        calculatorResult.totalPriceTenge
+      );
+    }
   };
 
   const handleOrderClick = () => {
@@ -164,6 +207,7 @@ const MetalCalculator: React.FC = () => {
     setSelectedDiameter('');
     setSearchQuery('');
     setSelectedItem(null);
+    setCategoryFilters({});
   };
 
   const getCategoryIcon = (category: string) => {
@@ -312,7 +356,11 @@ const MetalCalculator: React.FC = () => {
                       <select
                         value={selectedDiameter}
                         onChange={(e) => setSelectedDiameter(e.target.value)}
-                        className="w-full p-3 sm:p-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 text-sm sm:text-lg font-medium appearance-none bg-white"
+                        className={`w-full p-3 sm:p-4 border-2 rounded-xl focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 text-sm sm:text-lg font-medium appearance-none transition-all ${
+                          !selectedCategory 
+                            ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed' 
+                            : 'border-gray-300 bg-white text-gray-900'
+                        }`}
                         disabled={!selectedCategory}
                       >
                         <option value="">Все диаметры</option>
@@ -420,8 +468,13 @@ const MetalCalculator: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 {currentItems.map((item, index) => {
                   const priceInTenge = calculateFinalPrice(item.priceOver15);
+                  const price1to5 = calculateFinalPrice(item.price1to5);
+                  const price5to15 = calculateFinalPrice(item.price5to15);
+                  const priceOver15 = calculateFinalPrice(item.priceOver15);
                   const isInStock = item.stockTons > 5;
                   const isLowStock = item.stockTons > 0 && item.stockTons <= 5;
+                  const cartItem = isInCart(item.id || index);
+                  const quantityInCart = getItemQuantityInCart(item.id || index);
                   
                   return (
                     <div
@@ -430,9 +483,16 @@ const MetalCalculator: React.FC = () => {
                       className={`relative p-3 sm:p-4 lg:p-6 rounded-xl sm:rounded-2xl lg:rounded-3xl border-2 lg:border-3 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
                         selectedItem === item
                           ? 'border-purple-500 bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-2xl'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:shadow-xl'
+                          : `border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:shadow-xl ${cartItem ? 'ring-2 ring-green-500' : ''}`
                       }`}
                     >
+                      {/* Cart Status */}
+                      {cartItem && (
+                        <div className="absolute -top-1 sm:-top-2 -left-1 sm:-left-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 lg:px-3 py-1 rounded-full text-xs font-bold">
+                          В КОРЗИНЕ: {quantityInCart} шт
+                        </div>
+                      )}
+
                       {/* Stock Status */}
                       {isInStock && (
                         <div className="absolute -top-1 sm:-top-2 -right-1 sm:-right-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 lg:px-3 py-1 rounded-full text-xs font-bold animate-pulse">
@@ -446,14 +506,13 @@ const MetalCalculator: React.FC = () => {
                       )}
                       
                       <div className="mb-3 sm:mb-4 lg:mb-6">
-                        <h4 className="font-bold text-sm sm:text-base lg:text-lg mb-2 leading-tight">{item.name}</h4>
+                        <h4 className="font-bold text-sm sm:text-base lg:text-lg mb-2 leading-tight">
+                          {item.name} {item.size}
+                        </h4>
                         <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
-                          <span className={`text-lg sm:text-xl lg:text-2xl font-bold ${selectedItem === item ? 'text-orange-200' : 'text-blue-600'}`}>
-                            {item.size}
-                          </span>
                           {item.length && (
                             <span className={`text-xs px-2 py-1 rounded-full ${selectedItem === item ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-700'}`}>
-                              {item.length}
+                              Длина: {item.length}
                             </span>
                           )}
                           {item.steel && (
@@ -470,6 +529,14 @@ const MetalCalculator: React.FC = () => {
                       <div className="space-y-2 lg:space-y-3">
                         <div className="flex justify-between items-center">
                           <span className="text-xs sm:text-sm font-medium flex items-center">
+                            <Package className="h-3 sm:h-4 w-3 sm:w-4 mr-1" />
+                            Вес 1 шт:
+                          </span>
+                          <span className="font-bold text-xs sm:text-sm">{item.weightPerPiece.toFixed(2)} кг</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs sm:text-sm font-medium flex items-center">
                             <Gauge className="h-3 sm:h-4 w-3 sm:w-4 mr-1" />
                             На складе:
                           </span>
@@ -484,19 +551,21 @@ const MetalCalculator: React.FC = () => {
                           <span className="font-bold text-xs">{item.branch}</span>
                         </div>
                         
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs sm:text-sm font-medium flex items-center">
-                            <Package className="h-3 sm:h-4 w-3 sm:w-4 mr-1" />
-                            Вес шт:
-                          </span>
-                          <span className="font-bold text-xs sm:text-sm">{item.weightPerPiece.toFixed(1)} кг</span>
-                        </div>
-                        
-                        <div className="border-t pt-2 sm:pt-3">
-                          <div className="text-center">
-                            <div className="text-lg sm:text-xl lg:text-2xl font-bold mb-1">
-                              {Math.round(priceInTenge).toLocaleString()} ₸/т
+                        <div className="border-t pt-2 sm:pt-3 space-y-1">
+                          {/* Цены по объемам */}
+                          <div className="text-center space-y-1">
+                            <div className={`text-xs ${selectedItem === item ? 'text-purple-200' : 'text-gray-500'}`}>
+                              Цена 1-5 т: {Math.round(price1to5).toLocaleString()} ₸/т
                             </div>
+                            <div className={`text-xs ${selectedItem === item ? 'text-purple-200' : 'text-gray-500'}`}>
+                              Цена 5-15 т: {Math.round(price5to15).toLocaleString()} ₸/т
+                            </div>
+                            <div className={`text-sm font-bold ${selectedItem === item ? 'text-orange-200' : 'text-blue-600'}`}>
+                              Цена >15 т: {Math.round(priceOver15).toLocaleString()} ₸/т
+                            </div>
+                          </div>
+                          
+                          <div className="text-center">
                             <div className={`text-xs ${selectedItem === item ? 'text-purple-200' : 'text-gray-500'}`}>
                               (базовая: {Math.round(item.priceOver15).toLocaleString()} ₽/т)
                             </div>
@@ -632,6 +701,28 @@ const MetalCalculator: React.FC = () => {
                       <p className="text-xs sm:text-sm text-gray-600">Автоматический расчет</p>
                     </div>
                   </div>
+                </div>
+
+                {/* Quick Add Buttons */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                  <button
+                    onClick={() => setQuantityTons(Math.max(MINIMUM_ORDER_TONS, quantityTons - (quantityTons % 1 === 0 ? 1 : 0.5)))}
+                    className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-xl font-bold transition-all"
+                  >
+                    -1т
+                  </button>
+                  <button
+                    onClick={() => setQuantityTons(quantityTons + (quantityTons % 1 === 0 ? 1 : 0.5))}
+                    className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-xl font-bold transition-all"
+                  >
+                    +1т
+                  </button>
+                  <button
+                    onClick={() => setQuantityTons(MINIMUM_ORDER_TONS)}
+                    className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-xl font-bold transition-all text-xs sm:text-sm"
+                  >
+                    Мин.
+                  </button>
                 </div>
 
                 {/* Item Details */}
@@ -773,18 +864,31 @@ const MetalCalculator: React.FC = () => {
 
               {/* Order Button */}
               <div className="text-center">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
+                  <button 
+                    onClick={handleAddToCart}
+                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-bold transition-all transform hover:scale-105 shadow-lg flex items-center justify-center"
+                  >
+                    🛒 Добавить в корзину
+                  </button>
+                  <button 
+                    onClick={handleOrderClick}
+                    className="flex-1 bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:via-red-700 hover:to-orange-700 text-white px-4 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-bold transition-all transform hover:scale-105 shadow-lg flex items-center justify-center"
+                  >
+                    📞 Заказать сейчас
+                  </button>
+                </div>
+                
                 <button 
                   onClick={handleOrderClick}
-                  className="group bg-gradient-to-r from-orange-600 via-red-600 to-orange-600 hover:from-orange-700 hover:via-red-700 hover:to-orange-700 text-white px-6 sm:px-12 lg:px-20 py-4 sm:py-6 lg:py-10 rounded-2xl sm:rounded-3xl text-lg sm:text-2xl lg:text-3xl font-bold transition-all transform hover:scale-105 shadow-2xl mb-4 sm:mb-6 lg:mb-8"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-base sm:text-lg font-bold transition-all transform hover:scale-105 shadow-lg mb-4 sm:mb-6"
                 >
-                  <span className="flex items-center justify-center">
-                    📞 Заказать за {Math.round(calculatorResult.totalWithDelivery).toLocaleString()} ₸
-                    <ArrowRight className="ml-3 sm:ml-4 lg:ml-6 h-6 sm:h-8 lg:h-10 w-6 sm:w-8 lg:w-10 group-hover:translate-x-2 transition-transform" />
-                  </span>
+                  💬 Получить консультацию
                 </button>
+                
                 <div className="bg-yellow-100 border border-yellow-300 p-3 sm:p-4 lg:p-6 rounded-xl sm:rounded-2xl">
                   <p className="text-sm sm:text-base lg:text-lg text-gray-700 font-medium">
-                    ⚡ <strong>Цены актуальны на сегодня!</strong> Курс: {EXCHANGE_RATE} ₸/₽
+                    ⚠️ <strong>Актуальность цен уточняйте у менеджера</strong>
                     <br />
                     📞 Звоните прямо сейчас: <span className="font-bold text-blue-600 text-base sm:text-lg lg:text-xl">+7 (747) 219-93-69</span>
                     <br />
